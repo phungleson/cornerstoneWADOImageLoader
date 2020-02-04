@@ -13,7 +13,9 @@ function decodeJPEGLossless(imageFrame, pixelData) {
   const byteOutput = imageFrame.bitsAllocated <= 8 ? 1 : 2;
   // console.time('jpeglossless');
   const buffer = pixelData.buffer;
+  console.log("decoder");
   const decoder = new jpeg.lossless.Decoder();
+  console.log("decoder.decode", buffer, pixelData.byteOffset, pixelData.length, byteOutput);
   const decompressedData = decoder.decode(
     buffer,
     pixelData.byteOffset,

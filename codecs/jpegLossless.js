@@ -267,6 +267,8 @@
       this.yLoc = 0;
       current = this.stream.get16();
 
+
+      console.log("current0", current);
       if (current !== 0xFFD8) { // SOI
           throw new Error("Not a JPEG file");
       }
@@ -274,6 +276,7 @@
       current = this.stream.get16();
 
       while ((((current >> 4) !== 0x0FFC) || (current === 0xFFC4))) { // SOF 0~15
+          console.log("current1", current);
           switch (current) {
               case 0xFFC4: // DHT
                   this.huffTable.read(this.stream, this.HuffTab);
@@ -323,6 +326,7 @@
       this.frame.read(this.stream);
       current = this.stream.get16();
 
+      console.log("current2", current, this.restartInterval);
       do {
           while (current !== 0x0FFDA) { // SOS
               switch (current) {

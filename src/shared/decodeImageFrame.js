@@ -15,6 +15,8 @@ function decodeImageFrame(
 ) {
   const start = new Date().getTime();
 
+  console.log("transferSyntax", transferSyntax);
+
   if (transferSyntax === '1.2.840.10008.1.2') {
     // Implicit VR Little Endian
     imageFrame = decodeLittleEndian(imageFrame, pixelData);
