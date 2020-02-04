@@ -97,9 +97,11 @@
 
   /*** Constructor ***/
   jpeg.lossless.DataStream = jpeg.lossless.DataStream || function (data, offset, length) {
-      // Note: DataView is much slower than Int8Array
-      // this.buffer = new DataView(data, offset, length);
-      this.buffer = new Uint8Array(data, offset, length);
+      if (offset === undefined && length === undefined) { // Old api
+          this.buffer = new Uint8Array(data);
+      } else {
+          this.buffer = new Uint8Array(data, offset, length);
+      }
       this.index = 0;
   };
 
