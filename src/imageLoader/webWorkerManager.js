@@ -66,11 +66,13 @@ function startTaskOnWebWorker() {
 
       // assign this task to this web worker and send the web worker
       // a message to execute it
-      webWorkers[i].task = task;
-      webWorkers[i].worker.postMessage(
+      const webWorker = webWorkers[i];
+
+      webWorker.task = task;
+      webWorker.worker.postMessage(
         {
           taskType: task.taskType,
-          workerIndex: i,
+          workerIndex: webWorker.index,
           data: task.data,
         },
         task.transferList
@@ -92,21 +94,35 @@ function startTaskOnWebWorker() {
  * @param msg
  */
 function handleMessageFromWorker(msg) {
+  let position = 0;
+  for (let i = 0; i < webWorkers.length; i++) {
+    const webWorker = webWorkers[i];
+    if (webWorker.index === msg.data.workerIndex) {
+      position = i;
+    }
+  }
+
+  if (position >= webWorkers.length) {
+    return;
+  }
+
   // console.log('handleMessageFromWorker', msg.data);
   if (msg.data.taskType === 'initialize') {
-    webWorkers[msg.data.workerIndex].status = 'ready';
+    webWorkers[position].status = 'ready';
     startTaskOnWebWorker();
   } else {
-    const start = webWorkers[msg.data.workerIndex].task.start;
+    const start = webWorkers[position].task.start;
 
     const action = msg.data.status === 'success' ? 'resolve' : 'reject';
 
-    webWorkers[msg.data.workerIndex].task.deferred[action](msg.data.result);
+    webWorkers[position].task.deferred[action](msg.data.result);
 
-    webWorkers[msg.data.workerIndex].task = undefined;
+    webWorkers[position].task = undefined;
 
     statistics.numTasksExecuting--;
-    webWorkers[msg.data.workerIndex].status = 'ready';
+    // webWorkers[position].status = 'ready';
+    webWorkers[position].worker.terminate();
+    webWorkers.splice(position, 1);
     statistics.numTasksCompleted++;
 
     const end = new Date().getTime();
@@ -128,15 +144,17 @@ function spawnWebWorker() {
 
   // spawn the webworker
   const worker = new cornerstoneWADOImageLoaderWebWorker();
+  const index = Math.random().toString(32);
 
   webWorkers.push({
     worker,
+    index,
     status: 'initializing',
   });
   worker.addEventListener('message', handleMessageFromWorker);
   worker.postMessage({
     taskType: 'initialize',
-    workerIndex: webWorkers.length - 1,
+    workerIndex: index,
     config,
   });
 }
@@ -199,7 +217,7 @@ function loadWebWorkerTask(sourcePath, taskConfig) {
   for (let i = 0; i < webWorkers.length; i++) {
     webWorkers[i].worker.postMessage({
       taskType: 'loadWebWorkerTask',
-      workerIndex: webWorkers.length - 1,
+      workerIndex: '',
       sourcePath,
       config,
     });
